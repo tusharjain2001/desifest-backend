@@ -4,25 +4,14 @@ require("dotenv").config();
 
 const app = express();
 
-/* 🔑 CORS — MUST BE FIRST */
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://your-frontend-domain.com",
-  ],
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
+  origin: "*",
 }));
-
-
-
-
-
 app.use(express.json());
 
 // Health check
 app.get("/", (req, res) => {
-  res.send("Volunteer Backend Running 🚀");
+  res.send("DESIFEST Backend Running 🚀");
 });
 
 // Routes
@@ -32,7 +21,5 @@ app.use("/api", volunteerRoute);
 const artistRoute = require("./routes/artist");
 app.use("/api", artistRoute);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Export the Express app for Vercel
+module.exports = app;
