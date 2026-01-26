@@ -5,19 +5,18 @@ require("dotenv").config();
 const app = express();
 
 /* 🔑 CORS — MUST BE FIRST */
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173", // local dev
-      "https://your-frontend-domain.com", // production frontend
-    ],
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
-  })
-);
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://your-frontend-domain.com",
+  ],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+}));
 
-/* 🔥 THIS LINE IS MISSING */
-app.options("*", cors());
+
+
+
 
 app.use(express.json());
 
