@@ -4,7 +4,7 @@ require("dotenv").config();
 
 const app = express();
 
-// Middlewares
+/* 🔑 CORS — MUST BE FIRST */
 app.use(
   cors({
     origin: [
@@ -15,6 +15,10 @@ app.use(
     allowedHeaders: ["Content-Type"],
   })
 );
+
+/* 🔥 THIS LINE IS MISSING */
+app.options("*", cors());
+
 app.use(express.json());
 
 // Health check
@@ -28,7 +32,6 @@ app.use("/api", volunteerRoute);
 
 const artistRoute = require("./routes/artist");
 app.use("/api", artistRoute);
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
