@@ -21,5 +21,8 @@ app.use("/api", volunteerRoute);
 const artistRoute = require("./routes/artist");
 app.use("/api", artistRoute);
 
+const contactRoute = require("./routes/contact");
+app.use("/api", contactRoute);
+
 // Export the Express app for Vercel
 module.exports = app;
