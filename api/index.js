@@ -4,9 +4,12 @@ require("dotenv").config();
 
 const app = express();
 
-app.use(cors({
-  origin: "*",
-}));
+app.use(
+  cors({
+    origin: "*",
+  })
+);
+
 app.use(express.json());
 
 // Health check
@@ -15,14 +18,17 @@ app.get("/", (req, res) => {
 });
 
 // Routes
-const volunteerRoute = require("./routes/volunteer");
-app.use("/api", volunteerRoute);
+app.use("/api", require("./routes/volunteer"));
+app.use("/api", require("./routes/artist"));
+app.use("/api", require("./routes/contact"));
 
-const artistRoute = require("./routes/artist");
-app.use("/api", artistRoute);
+// ✅ START SERVER ONLY LOCALLY
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+}
 
-const contactRoute = require("./routes/contact");
-app.use("/api", contactRoute);
-
-// Export the Express app for Vercel
+// ✅ Export for Vercel
 module.exports = app;
