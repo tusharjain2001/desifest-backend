@@ -1,18 +1,40 @@
 const express = require("express");
 const nodemailer = require("nodemailer");
 const path = require("path");
+const axios = require("axios");
 
 const router = express.Router();
 
 router.post("/send-contact-email", async (req, res) => {
-  const { name, email, message, consent } = req.body;
+  const { name, email, message, consent, captchaToken } = req.body;
 
-  // Validation
+  // Basic validation
   if (!name || !email || !message) {
     return res.status(400).json({ error: "Required fields missing" });
   }
 
+  if (!captchaToken) {
+    return res.status(400).json({ error: "Captcha token missing" });
+  }
+
   try {
+    // 🔐 VERIFY CAPTCHA WITH GOOGLE
+    const captchaVerify = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      null,
+      {
+        params: {
+          secret: process.env.RECAPTCHA_SECRET,
+          response: captchaToken,
+        },
+      }
+    );
+console.log(captchaVerify.data)
+    if (!captchaVerify.data.success) {
+      return res.status(400).json({ error: "Captcha verification failed" });
+    }
+
+    // 📧 EMAIL TRANSPORTER
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -22,7 +44,6 @@ router.post("/send-contact-email", async (req, res) => {
         pass: process.env.EMAIL_PASS,
       },
     });
-
 
 
 
@@ -181,7 +202,6 @@ router.post("/send-contact-email", async (req, res) => {
 
 
 
-
     await transporter.sendMail({
       from: `"DESIFEST Contact" <${process.env.EMAIL_USER}>`,
       to: process.env.RECEIVER_EMAIL,
@@ -199,6 +219,7 @@ router.post("/send-contact-email", async (req, res) => {
     return res.status(200).json({
       success: "Contact email sent successfully",
     });
+
   } catch (error) {
     console.error("Contact Email Error:", error);
     return res.status(500).json({
