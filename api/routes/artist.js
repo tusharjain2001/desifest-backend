@@ -2,7 +2,7 @@ const express = require("express");
 const nodemailer = require("nodemailer");
 const path = require("path");
 const router = express.Router();
-
+const axios = require("axios");
 router.post("/send-artist-email", async (req, res) => {
   const {
     event,
@@ -16,40 +16,57 @@ router.post("/send-artist-email", async (req, res) => {
     province,
     postalCode,
     country,
-
     facebook,
     youtube,
     instagram,
     tiktok,
     spotify,
     website,
-
     genre,
     otherGenre,
-
     performanceLanguage,
     isBand,
     performedBefore,
     performanceType,
     socanRegistered,
-
     managerFirstName,
     managerLastName,
     managerEmail,
     managerPhoneCode,
     managerPhone,
-
     pastLinks,
     ideas,
     consent,
+    captchaToken
   } = req.body;
 
-  // 🔴 minimal required validation
   if (!firstName || !email || !event) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
+  if (!captchaToken) {
+    return res.status(400).json({ error: "Captcha token missing" });
+  }
+
   try {
+
+    // 🔐 VERIFY CAPTCHA
+    const captchaVerify = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      null,
+      {
+        params: {
+          secret: process.env.RECAPTCHA_SECRET,
+          response: captchaToken,
+        },
+      }
+    );
+
+    if (!captchaVerify.data.success) {
+      return res.status(400).json({ error: "Captcha verification failed" });
+    }
+console.log(captchaVerify.data)
+    // 📧 EMAIL TRANSPORT
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -243,7 +260,6 @@ router.post("/send-artist-email", async (req, res) => {
     </body>
     </html>
     `;
-    
 
     await transporter.sendMail({
       from: `"DESIFEST Artist Signup" <${process.env.EMAIL_USER}>`,
@@ -253,16 +269,16 @@ router.post("/send-artist-email", async (req, res) => {
       attachments: [
         {
           filename: "artist-banner.png",
-          path: path.join(__dirname, "./cont.png"), // same image you used before
+          path: path.join(__dirname, "./cont.png"),
           cid: "desifestbanner",
         },
       ],
     });
-    
 
     res.status(200).json({
-      success: "Artist signup email sent successfully",
+      success: "Artist signup email sent successfull",
     });
+
   } catch (err) {
     console.error("Artist Email Error:", err);
     res.status(500).json({

@@ -2,7 +2,7 @@ const express = require("express");
 const nodemailer = require("nodemailer");
 const path = require("path");
 const router = express.Router();
-
+const axios = require("axios");
 router.post("/send-volunteer-email", async (req, res) => {
   const {
     firstName,
@@ -19,16 +19,34 @@ router.post("/send-volunteer-email", async (req, res) => {
     howCanYouHelp,
     howCanWeHelpYou,
     consent,
+    captchaToken
   } = req.body;
 
-  // Basic validation
   if (!firstName || !email || !genre) {
-    return res.status(400).json({
-      error: "Required fields missing",
-    });
+    return res.status(400).json({ error: "Required fields missing" });
+  }
+
+  if (!captchaToken) {
+    return res.status(400).json({ error: "Captcha token missing" });
   }
 
   try {
+    // 🔐 Verify captcha with Google
+    const captchaVerify = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      null,
+      {
+        params: {
+          secret: process.env.RECAPTCHA_SECRET,
+          response: captchaToken,
+        },
+      }
+    );
+
+    if (!captchaVerify.data.success) {
+      return res.status(400).json({ error: "Captcha verification failed" });
+    }
+
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -190,7 +208,6 @@ router.post("/send-volunteer-email", async (req, res) => {
     </html>
     `;
     
-
     await transporter.sendMail({
       from: `"DESIFEST Volunteer" <${process.env.EMAIL_USER}>`,
       to: process.env.RECEIVER_EMAIL,
@@ -199,16 +216,16 @@ router.post("/send-volunteer-email", async (req, res) => {
       attachments: [
         {
           filename: "volunteer-banner.png",
-          path: path.join(__dirname, "./cont.png"), // your provided image
+          path: path.join(__dirname, "./cont.png"),
           cid: "desifestbanner",
         },
       ],
     });
 
-
     res.status(200).json({
       success: "Volunteer email sent successfully",
     });
+
   } catch (error) {
     console.error("Email Error:", error);
     res.status(500).json({
